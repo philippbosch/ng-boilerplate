@@ -1,0 +1,13 @@
+{
+  "name": "boilerplate",
+  "version": "0.0.0",
+  "authors": [
+    "Philipp Bosch <hello@pb.io>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "angular": "1.2.6",
+    "angular-ui-router": "0.2.7"
+  }
+}

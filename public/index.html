@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="boilerplate" ng-controller="MainController">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title ng-bind="pageTitle"></title>
+        <!--(if target dev)><!-->
+        <link rel="stylesheet" href="/stylesheets/screen.css">
+        <!--<!(endif)-->
+        <!--(if target dist)>
+        <link rel="stylesheet" href="/stylesheets/screen.min.css">
+        <!(endif)-->
+    </head>
+    <body>
+        <div ui-view="main"></div>
+
+        <!--(if target dev)><!-->
+        <!-- bower:js -->
+        <!-- endbower -->
+        <script src="/javascripts/controllers/main.js"></script>
+        <script src="/javascripts/controllers/home.js"></script>
+        <script src="/javascripts/services/time.js"></script>
+        <script src="/javascripts/app.js"></script>
+        <!--<!(endif)-->
+        <!--(if target dist)>
+        <script src="/javascripts/app.min.js"></script>
+        <!(endif)-->
+    </body>
+</html>
