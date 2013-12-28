@@ -29,6 +29,7 @@ module.exports = (grunt) ->
       target:
         src: ['public/index.html']
         ignorePath: 'public'
+        cwd: 'public'
 
     'clean':
       ['dist', 'build']

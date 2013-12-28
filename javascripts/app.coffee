@@ -15,7 +15,7 @@ angular
             url: '/'
             views:
                 main:
-                    template: 'partials/home.html'
+                    templateUrl: 'partials/home.html'
                     controller: 'HomeController'
     ])
 
