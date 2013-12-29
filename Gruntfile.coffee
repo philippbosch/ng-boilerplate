@@ -1,96 +1,147 @@
 module.exports = (grunt) ->
-  grunt.loadNpmTasks 'grunt-bower-install'
-  grunt.loadNpmTasks 'grunt-bower-concat'
-  grunt.loadNpmTasks 'grunt-contrib-clean'
-  grunt.loadNpmTasks 'grunt-contrib-coffee'
-  grunt.loadNpmTasks 'grunt-contrib-concat'
-  grunt.loadNpmTasks 'grunt-contrib-connect'
-  grunt.loadNpmTasks 'grunt-contrib-copy'
-  grunt.loadNpmTasks 'grunt-contrib-compass'
-  grunt.loadNpmTasks 'grunt-contrib-compress'
-  grunt.loadNpmTasks 'grunt-contrib-cssmin'
-  grunt.loadNpmTasks 'grunt-contrib-uglify'
-  grunt.loadNpmTasks 'grunt-rsync'
-  grunt.loadNpmTasks 'grunt-targethtml'
+    grunt.loadNpmTasks 'grunt-bower-install'
+    grunt.loadNpmTasks 'grunt-bower-concat'
+    grunt.loadNpmTasks 'grunt-concurrent'
+    grunt.loadNpmTasks 'grunt-contrib-clean'
+    grunt.loadNpmTasks 'grunt-contrib-coffee'
+    grunt.loadNpmTasks 'grunt-contrib-concat'
+    grunt.loadNpmTasks 'grunt-contrib-connect'
+    grunt.loadNpmTasks 'grunt-contrib-copy'
+    grunt.loadNpmTasks 'grunt-contrib-compass'
+    grunt.loadNpmTasks 'grunt-contrib-compress'
+    grunt.loadNpmTasks 'grunt-contrib-cssmin'
+    grunt.loadNpmTasks 'grunt-contrib-uglify'
+    grunt.loadNpmTasks 'grunt-contrib-watch'
+    grunt.loadNpmTasks 'grunt-rsync'
+    grunt.loadNpmTasks 'grunt-targethtml'
 
-  grunt.registerTask 'default', ['clean', 'bower_concat', 'coffee', 'concat', 'uglify', 'compass', 'cssmin', 'targethtml', 'copy']
-  grunt.registerTask 'deploy', ['default', 'rsync', 'clean']
-  grunt.registerTask 'serve', ['default', 'connect']
+    grunt.registerTask 'default', ['clean', 'bower_concat', 'coffee', 'concat', 'uglify', 'compass', 'cssmin', 'targethtml', 'copy']
+    grunt.registerTask 'deploy', ['default', 'rsync', 'clean']
+    grunt.registerTask 'distserver', ['default', 'connect:dist']
+    grunt.registerTask 'devserver', ['bower-install', 'concurrent:dev']
 
-  grunt.initConfig
-    pkg: grunt.file.readJSON 'package.json'
+    grunt.initConfig
+        pkg: grunt.file.readJSON 'package.json'
 
 
-    'bower_concat':
-      all:
-        dest: 'build/javascripts/components.js'
+        'bower_concat':
+            all:
+                dest: 'build/javascripts/components.js'
 
-    'bower-install':
-      target:
-        src: ['public/index.html']
-        ignorePath: 'public'
-        cwd: 'public'
+        'bower-install':
+            target:
+                src: ['public/index.html']
+                ignorePath: 'public'
+                cwd: 'public'
 
-    'clean':
-      ['dist', 'build']
+        'clean':
+            ['dist', 'build']
 
-    'coffee':
-      compile:
-        files:
-          'build/javascripts/app.js': ['javascripts/**/*.coffee']
+        'coffee':
+            dev:
+                expand: true
+                src: 'javascripts/**/*.coffee'
+                dest: 'public'
+                ext: '.js'
 
-    'compass':
-      dist:
-        options:
-          config: 'compass.config'
-          cssDir: 'build/stylesheets'
-          fontsDir: 'fonts'
-          imagesDir: 'images'
+            compile:
+                files:
+                    'build/javascripts/app.js': ['javascripts/**/*.coffee']
 
-    'concat':
-      dist:
-        files:
-          'build/javascripts/combined.js': [
-            'build/javascripts/components.js',
-            'public/components/codemirror/mode/markdown/markdown.js',
-            'build/javascripts/app.js'
-          ]
+        'compass':
+            dist:
+                options:
+                    config: 'compass.config'
+                    cssDir: 'build/stylesheets'
+                    fontsDir: 'fonts'
+                    imagesDir: 'images'
+            dev:
+                options:
+                    config: 'compass.config'
+                    cssDir: 'public/stylesheets'
+                    fontsDir: 'fonts'
+                    imagesDir: 'images'
 
-    'connect':
-      server:
-        options:
-          port: 8888
-          base: 'dist'
-          keepalive: true
-          open: true
+        'concat':
+            dist:
+                files:
+                    'build/javascripts/combined.js': [
+                        'build/javascripts/components.js',
+                        'public/components/codemirror/mode/markdown/markdown.js',
+                        'build/javascripts/app.js'
+                    ]
 
-    'copy':
-      dist:
-        files: [
-          {cwd: 'public/partials/', expand: true, src: '**', dest: 'dist/partials/'}
-        ]
+        'concurrent':
+            options:
+                logConcurrentOutput: true
+            dev:
+                tasks: ['watch:compass', 'watch:coffee', 'watch:livereload', 'connect:dev']
 
-    'cssmin':
-      dist:
-        files:
-          'dist/stylesheets/screen.min.css': [
-            'build/stylesheets/screen.css'
-          ]
+        'connect':
+            options:
+                keepalive: true
+                open: false
+                hostname: 'localhost'
 
-    'rsync':
-      dist:
-        options:
-          src: './dist/'
-          dest: 'public_html'
-          host: 'user@host'
-          recursive: true
+            dev:
+                options:
+                    port: 4000
+                    base: 'public'
+                    middleware: (connect, options) ->
+                        [
+                            require('connect-livereload')(),
+                            connect.static(options.base),
+                        ]
 
-    'targethtml':
-      dist:
-        files:
-          'dist/index.html': ['public/index.html']
+            dist:
+                options:
+                    port: 8888
+                    base: 'dist'
 
-    'uglify':
-      dist:
-        files:
-          'dist/javascripts/app.min.js': 'build/javascripts/combined.js'
+        'copy':
+            dist:
+                files: [
+                    {cwd: 'public/partials/', expand: true, src: '**', dest: 'dist/partials/'}
+                ]
+
+        'cssmin':
+            dist:
+                files:
+                    'dist/stylesheets/screen.min.css': [
+                        'build/stylesheets/screen.css'
+                    ]
+
+        'rsync':
+            dist:
+                options:
+                    src: './dist/'
+                    dest: 'public_html'
+                    host: 'user@host'
+                    recursive: true
+
+        'targethtml':
+            dist:
+                files:
+                    'dist/index.html': ['public/index.html']
+
+        'uglify':
+            dist:
+                files:
+                    'dist/javascripts/app.min.js': 'build/javascripts/combined.js'
+
+        'watch':
+            options:
+                spawn: false
+
+            coffee:
+                files: ['javascripts/**/*.coffee']
+                tasks: ['coffee:dev']
+
+            compass:
+                files: ['stylesheets/**/*.scss']
+                tasks: ['compass:dev']
+
+            livereload:
+                options:
+                    livereload: true
+                files: ['public/**/*']
