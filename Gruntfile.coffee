@@ -49,18 +49,27 @@ module.exports = (grunt) ->
                     'build/javascripts/app.js': ['javascripts/**/*.coffee']
 
         'compass':
+            options:
+                httpPath: '/'
+                httpStylesheetsPath: '/stylesheets/'
+                httpImagesPath: '/images/'
+                httpFontsPath: '/fonts/'
+                httpJavascriptsPath: '/javascripts/'
+                sassDir: 'stylesheets'
+                imagesDir: 'public/images'
+                fontsDir: 'public/fonts'
+                javascriptsDir: 'public/javascripts'
+                outputStyle: 'expanded'
+                relativeAssets: true
+                lineComments: false
+
             dist:
                 options:
-                    config: 'compass.config'
                     cssDir: 'build/stylesheets'
-                    fontsDir: 'fonts'
-                    imagesDir: 'images'
+
             dev:
                 options:
-                    config: 'compass.config'
                     cssDir: 'public/stylesheets'
-                    fontsDir: 'fonts'
-                    imagesDir: 'images'
 
         'concat':
             dist:
