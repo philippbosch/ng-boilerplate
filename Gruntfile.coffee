@@ -18,7 +18,7 @@ module.exports = (grunt) ->
     grunt.registerTask 'default', ['clean', 'bower_concat', 'coffee', 'concat', 'uglify', 'compass', 'cssmin', 'targethtml', 'copy']
     grunt.registerTask 'deploy', ['default', 'rsync', 'clean']
     grunt.registerTask 'distserver', ['default', 'connect:dist']
-    grunt.registerTask 'devserver', ['bower-install', 'concurrent:dev']
+    grunt.registerTask 'devserver', ['bower-install', 'coffee:dev', 'compass:dev', 'concurrent:dev']
 
     grunt.initConfig
         pkg: grunt.file.readJSON 'package.json'
