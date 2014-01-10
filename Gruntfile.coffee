@@ -12,12 +12,12 @@ module.exports = (grunt) ->
     grunt.loadNpmTasks 'grunt-contrib-cssmin'
     grunt.loadNpmTasks 'grunt-contrib-uglify'
     grunt.loadNpmTasks 'grunt-contrib-watch'
-    grunt.loadNpmTasks 'grunt-rsync'
+    grunt.loadNpmTasks 'grunt-shell'
     grunt.loadNpmTasks 'grunt-targethtml'
 
-    grunt.registerTask 'default', ['clean', 'bower_concat', 'coffee', 'concat', 'uglify', 'compass', 'cssmin', 'targethtml', 'copy']
-    grunt.registerTask 'deploy', ['default', 'rsync', 'clean']
-    grunt.registerTask 'distserver', ['default', 'connect:dist']
+    grunt.registerTask 'dist', ['clean', 'bower_concat', 'coffee', 'compass:dist', 'cssmin', 'concat', 'uglify', 'copy', 'targethtml']
+    grunt.registerTask 'deploy', ['dist', 'shell:deployToDokku', 'clean']
+    grunt.registerTask 'distserver', ['dist', 'connect:dist']
     grunt.registerTask 'devserver', ['bower-install', 'coffee:dev', 'compass:dev', 'concurrent:dev']
 
     grunt.initConfig
@@ -56,9 +56,6 @@ module.exports = (grunt) ->
                 httpFontsPath: '/fonts/'
                 httpJavascriptsPath: '/javascripts/'
                 sassDir: 'stylesheets'
-                imagesDir: 'public/images'
-                fontsDir: 'public/fonts'
-                javascriptsDir: 'public/javascripts'
                 outputStyle: 'expanded'
                 relativeAssets: true
                 lineComments: false
@@ -66,17 +63,22 @@ module.exports = (grunt) ->
             dist:
                 options:
                     cssDir: 'build/stylesheets'
+                    imagesDir: 'build/images'
+                    fontsDir: 'build/fonts'
+                    javascriptsDir: 'build/javascripts'
 
             dev:
                 options:
                     cssDir: 'public/stylesheets'
+                    imagesDir: 'public/images'
+                    fontsDir: 'public/fonts'
+                    javascriptsDir: 'public/javascripts'
 
         'concat':
             dist:
                 files:
                     'build/javascripts/combined.js': [
                         'build/javascripts/components.js',
-                        'public/components/codemirror/mode/markdown/markdown.js',
                         'build/javascripts/app.js'
                     ]
 
@@ -96,21 +98,26 @@ module.exports = (grunt) ->
                 options:
                     port: 4000
                     base: 'public'
+                    debug: true
+                    livereload: true
                     middleware: (connect, options) ->
                         [
-                            require('connect-livereload')(),
-                            connect.static(options.base),
+                            require('connect-file-exists-or-rewrite')(options.base),
+                            connect.static(options.base)
                         ]
 
             dist:
                 options:
-                    port: 8888
+                    port: 8000
                     base: 'dist'
 
         'copy':
             dist:
                 files: [
                     {cwd: 'public/partials/', expand: true, src: '**', dest: 'dist/partials/'}
+                    {cwd: 'public/fonts/', expand: true, src: '**', dest: 'dist/fonts/'}
+                    {cwd: 'public/images/', expand: true, src: '**', dest: 'dist/images/'}
+                    {cwd: 'public/data/', expand: true, src: '**', dest: 'dist/data/'}
                 ]
 
         'cssmin':
@@ -120,13 +127,40 @@ module.exports = (grunt) ->
                         'build/stylesheets/screen.css'
                     ]
 
-        'rsync':
-            dist:
+        'shell':
+            initDokkuDeploy:
                 options:
-                    src: './dist/'
-                    dest: 'public_html'
-                    host: 'user@host'
-                    recursive: true
+                    stdout: true
+                    stderr: true
+                command: [
+                    '[ -d .dokku ] || git clone . .dokku',
+                    'cd .dokku',
+                    'git show-ref --verify --quiet refs/heads/dist || ( git checkout --orphan dist && git rm -rf . && touch .nginx && mkdir www && touch www/index.html && git add . && git commit -am "Initial commit." )',
+                    'git remote add dokku dokku@pbsit.es:<%= pkg.name %>',
+                    'git remote add localdokku dokku@dokku.me:<%= pkg.name %>',
+                    'git checkout dist',
+                    'cd ..'
+                ].join(' && ')
+
+            deployToDokku:
+                options:
+                    stdout: true
+                    stderr: true
+                command: [
+                    '[ -d .dokku ] || ( echo Run "initDokkuDeploy" task first && exit 99)',
+                    'rm -rf .dokku/www/*',
+                    'cp -R dist/* .dokku/www/',
+                    '[ ! -f conf/nginx.conf.erb ] || cp conf/nginx.conf.erb .dokku/',
+                    '[ ! -f conf/mime.types ] || cp conf/mime.types .dokku/',
+                    'cd .dokku',
+                    'date > .deploytime',
+                    'git add --all .',
+                    'git commit -am "Deploy."',
+                    'git push dokku dist:master',
+                    'cd ..',
+                    'echo Deployed.'
+                ].join(' && ')
+
 
         'targethtml':
             dist:
