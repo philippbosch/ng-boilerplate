@@ -92,7 +92,7 @@ module.exports = (grunt) ->
             options:
                 keepalive: true
                 open: false
-                hostname: 'localhost'
+                hostname: '*'
 
             dev:
                 options:
