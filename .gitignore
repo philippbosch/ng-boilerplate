@@ -3,6 +3,7 @@
 \#*
 .\#*
 .sass-cache
+Gemfile.lock
 node_modules
 public/components
 ./dist
