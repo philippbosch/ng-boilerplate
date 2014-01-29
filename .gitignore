@@ -4,6 +4,7 @@
 .\#*
 .sass-cache
 node_modules
+public/components
 ./dist
 ./build
 .dokku
