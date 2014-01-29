@@ -1,24 +1,36 @@
 module.exports = (grunt) ->
-    grunt.loadNpmTasks 'grunt-bower-install'
-    grunt.loadNpmTasks 'grunt-bower-concat'
-    grunt.loadNpmTasks 'grunt-concurrent'
-    grunt.loadNpmTasks 'grunt-contrib-clean'
-    grunt.loadNpmTasks 'grunt-contrib-coffee'
-    grunt.loadNpmTasks 'grunt-contrib-concat'
-    grunt.loadNpmTasks 'grunt-contrib-connect'
-    grunt.loadNpmTasks 'grunt-contrib-copy'
-    grunt.loadNpmTasks 'grunt-contrib-compass'
-    grunt.loadNpmTasks 'grunt-contrib-compress'
-    grunt.loadNpmTasks 'grunt-contrib-cssmin'
-    grunt.loadNpmTasks 'grunt-contrib-uglify'
-    grunt.loadNpmTasks 'grunt-contrib-watch'
-    grunt.loadNpmTasks 'grunt-shell'
-    grunt.loadNpmTasks 'grunt-targethtml'
+    grunt.registerTask 'dist', [
+        'clean',
+        'bower_concat',
+        'coffee',
+        'compass:dist',
+        'cssmin',
+        'concat',
+        'uglify',
+        'copy',
+        'targethtml'
+    ]
 
-    grunt.registerTask 'dist', ['clean', 'bower_concat', 'coffee', 'compass:dist', 'cssmin', 'concat', 'uglify', 'copy', 'targethtml']
-    grunt.registerTask 'deploy', ['dist', 'shell:deployToDokku', 'clean']
-    grunt.registerTask 'distserver', ['dist', 'connect:dist']
-    grunt.registerTask 'devserver', ['bower-install', 'coffee:dev', 'compass:dev', 'concurrent:dev']
+    grunt.registerTask 'deploy', [
+        'dist',
+        'shell:deployToDokku',
+        'clean'
+    ]
+
+    grunt.registerTask 'distserver', [
+        'dist',
+        'connect:dist'
+    ]
+
+    grunt.registerTask 'devserver', [
+        'bower-install',
+        'coffee:dev',
+        'compass:dev',
+        'connect:dev',
+        'watch'
+    ]
+
+    grunt.registerTask 'default', ['devserver']
 
     grunt.initConfig
         pkg: grunt.file.readJSON 'package.json'
@@ -29,7 +41,7 @@ module.exports = (grunt) ->
                 dest: 'build/javascripts/components.js'
 
         'bower-install':
-            target:
+            all:
                 src: ['public/index.html']
                 ignorePath: 'public'
                 cwd: 'public'
@@ -82,15 +94,8 @@ module.exports = (grunt) ->
                         'build/javascripts/app.js'
                     ]
 
-        'concurrent':
-            options:
-                logConcurrentOutput: true
-            dev:
-                tasks: ['watch:compass', 'watch:coffee', 'watch:livereload', 'connect:dev']
-
         'connect':
             options:
-                keepalive: true
                 open: false
                 hostname: '*'
 
@@ -99,7 +104,6 @@ module.exports = (grunt) ->
                     port: 4000
                     base: 'public'
                     debug: true
-                    livereload: true
                     middleware: (connect, options) ->
                         [
                             require('connect-file-exists-or-rewrite')(options.base),
@@ -175,16 +179,28 @@ module.exports = (grunt) ->
         'watch':
             options:
                 spawn: false
+                livereload: true
 
             coffee:
-                files: ['javascripts/**/*.coffee']
-                tasks: ['coffee:dev']
+                files: '<%= coffee.dev.src %>'
+                tasks: 'coffee:dev'
+                options:
+                    events: ['changed', 'added']
 
             compass:
-                files: ['stylesheets/**/*.scss']
-                tasks: ['compass:dev']
+                files: '<%= compass.options.sassDir %>/**/*.scss'
+                tasks: 'compass:dev'
+                options:
+                    events: ['changed', 'added']
 
             livereload:
                 options:
                     livereload: true
-                files: ['public/**/*']
+                files: 'public/**/*'
+
+
+    grunt.event.on 'watch', (action, filepath) ->
+        if grunt.file.isMatch(grunt.config('watch.coffee.files'), filepath)
+            grunt.config('coffee.dev.src', filepath);
+
+    require('load-grunt-tasks')(grunt)
