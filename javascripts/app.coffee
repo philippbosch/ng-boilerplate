@@ -4,6 +4,7 @@ angular
     .module('boilerplate', [
         'ui.router',
         'boilerplate.controllers',
+        'boilerplate.directives',
         'boilerplate.services'
     ])
 
@@ -24,6 +25,12 @@ angular
     .module('boilerplate.controllers', [
         'boilerplate.controllers.main',
         'boilerplate.controllers.home',
+    ])
+
+
+angular
+    .module('boilerplate.directives', [
+        'boilerplate.directives.loremipsum',
     ])
 
 
